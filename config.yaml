@@ -1,0 +1,101 @@
+# this is the single source of truth for configuration.
+# to make it easier to config and not hardcoded, always put the variable here
+# and call it using viper in your app
+
+# for production, copy this file and change the name to config.yaml
+# for test, copy this file and change the name to config.test.yaml
+
+database:
+  sql:
+    protocol: "postgresql"
+    host: "digihome-db"
+    user: "myusername"
+    password: "password"
+    port: "5432"
+    name: "digihome"
+    sslmode: "disable"
+
+llm:
+  embed:
+    model: "bge-m3"
+    endpoint: "http://localhost:11434/api/embed"
+    api_key: "" # env LLM_EMBED_API_KEY — Bearer token for OpenAI-compatible endpoints (e.g. https://api.openai.com/v1/embeddings)
+  chat:
+    endpoint: "http://localhost:11434/api/chat"
+    model: "qwen3.5:0.8b"
+    api_key: "" # env LLM_CHAT_API_KEY — Bearer token for OpenAI-compatible endpoints (e.g. https://api.openai.com/v1/chat/completions)
+    num_ctx: 16384
+    reserve_reply_tokens: 4096
+    top_k_history: 10
+    recent_messages: 5
+    top_k_documents: 3
+    max_tokens: 256
+
+app:
+  base:
+    url: "https://localhost/api"
+  # name: "your_app_name"
+  http:
+    port: 8080
+# this is an example. uncomment if your app connect to other services via grpc
+# grpc:
+# service:
+# service_a: service_a:50051
+# service_b: service_b:50051
+
+# valkey:
+#   address: "localhost"
+#   port: "6379"
+#   username: "username"
+#   password: "password"
+
+# nats:
+#   protocol: "nats"
+#   address: "localhost"
+#   port: "4221"
+#   credential:
+#     user: "user"
+#     password: "password"
+#   connection_name: "your_service/app_name"
+#   timeout: 10
+
+# uncomment if you want to create example_stream
+# and maybe consumer in your app. for example how to create, go to
+# http://https://github.com/micros-template/notification-service/blob/main/cmd/server/subscriber.go
+# or nats official documentation
+# jetstream:
+# notification:
+# stream:
+# name: "example_stream"
+# description: "this is example stream"
+# subject:
+# global: "example_stream.>"
+# specific: "example_stream.specific"
+
+rustfs:
+  host: "digihome-object-storage"
+  port: 9000
+  credential:
+    user: "ROOTUSER"
+    password: "CHANGEME123"
+
+prometheus:
+  url: "https://localhost/prometheus"
+
+server:
+  cors:
+    allow:
+      origins: "*"
+      methods: "GET,POST,PUT,DELETE,OPTIONS,PATCH"
+      headers: "Content-Type,Authorization,X-Requested-With,X-CSRF-Token,Accept,Origin,Cache-Control,X-File-Name,X-File-Type,X-File-Size"
+      credential: true
+    expose:
+      headers: "Content-Length,Content-Range"
+    max:
+      age: 86400
+
+auth:
+  jwt:
+    issuer: "digihome-backend-service"
+    access_token_ttl_minutes: 15
+    refresh_token_ttl_days: 7
