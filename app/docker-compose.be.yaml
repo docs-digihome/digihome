@@ -1,0 +1,15 @@
+services:
+  digihome-backend-service:
+    image: ghcr.io/docs-digihome/digihome-be:${BACKEND_IMAGE_TAG:-latest}
+    container_name: digihome-backend-service
+    restart: unless-stopped
+    volumes:
+      - ./config.yaml:/config.yaml:ro
+    environment:
+      - ENV=${BACKEND_ENV:-production}
+    depends_on:
+      digihome-db: {condition: service_healthy}
+      digihome-object-storage: {condition: service_healthy}
+      ollama: {condition: service_started}
+    networks:
+      - digihome-network

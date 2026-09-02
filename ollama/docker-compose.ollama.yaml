@@ -1,0 +1,41 @@
+services:
+  ollama:
+    image: ollama/ollama:0.33.2
+    container_name: ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_KEEP_ALIVE=24h
+    networks:
+      - digihome-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities:
+                - gpu
+
+  ollama-init:
+    image: ollama/ollama:0.33.2
+    container_name: ollama-init
+    depends_on:
+      - ollama
+    environment:
+      - OLLAMA_HOST=http://ollama:11434
+      - OLLAMA_MODELS=${OLLAMA_MODELS:-bge-m3 qwen3.5:0.8b}
+    networks:
+      - digihome-network
+    entrypoint:
+      [
+        "/bin/sh",
+        "-c",
+        "sleep 10; for m in $${OLLAMA_MODELS}; do ollama pull $${m}; done"
+      ]
+
+volumes:
+  ollama_data: {}

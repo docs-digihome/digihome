@@ -1,0 +1,4 @@
+name: digihome
+
+networks:
+    digihome-network:

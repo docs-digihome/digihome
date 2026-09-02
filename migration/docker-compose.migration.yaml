@@ -1,0 +1,41 @@
+services:
+  digihome-migrate:
+    image: migrate/migrate:v4.18.2
+    container_name: digihome-migrate
+    depends_on:
+      digihome-db:
+        condition: service_healthy
+    networks:
+      - digihome-network
+    environment:
+      # Single source for migrate -database. Pass via .env/shell; defaults compose from DB_* to match db/docker-compose.psql.yaml:7-9
+      - DATABASE_URL=${DATABASE_URL:-postgres://${DB_USER:-myusername}:${DB_PASSWORD:-password}@digihome-db:5432/${DB_NAME:-digihome}?sslmode=disable}
+      - MIGRATIONS_GIT_REF=${MIGRATIONS_GIT_REF:-main}
+    entrypoint: ["/bin/sh", "-c"]
+    # Runtime fetch from https://github.com/docs-digihome/digihome-be/tree/main/migrations
+    # so no vendored copy needed. Uses curl+tar (faster than git sparse-checkout, verbose).
+    command:
+      - |
+        set -ex
+        echo "==> fetching migrations from docs-digihome/digihome-be@$${MIGRATIONS_GIT_REF}..."
+        echo "==> DB host: $$(echo "$${DATABASE_URL}" | sed -E 's|.*@([^:/?]+).*|\1|') ref: $${MIGRATIONS_GIT_REF}"
+        # ensure deps (migrate image is alpine) - verbose, not silenced
+        if command -v apk >/dev/null 2>&1; then
+          apk add --no-cache ca-certificates curl tar
+        elif command -v apt-get >/dev/null 2>&1; then
+          apt-get update && apt-get install -y ca-certificates curl tar
+        fi
+        rm -rf /tmp/be /tmp/be.tar.gz
+        echo "==> downloading https://github.com/docs-digihome/digihome-be/archive/$${MIGRATIONS_GIT_REF}.tar.gz ..."
+        curl -fSL --progress-bar "https://github.com/docs-digihome/digihome-be/archive/$${MIGRATIONS_GIT_REF}.tar.gz" -o /tmp/be.tar.gz
+        echo "==> extracting /tmp/be.tar.gz ..."
+        tar -xzf /tmp/be.tar.gz -C /tmp
+        mv "/tmp/digihome-be-$${MIGRATIONS_GIT_REF}" /tmp/be
+        echo "==> migrations list:"
+        ls -lh /tmp/be/migrations/
+        echo "==> running migrate up with -path=/tmp/be/migrations (verbose) ..."
+        migrate -path=/tmp/be/migrations -database="$${DATABASE_URL}" -verbose up
+        echo "==> migrate done (exit: $$?)"
+        echo "==> current migrate version:"
+        migrate -path=/tmp/be/migrations -database="$${DATABASE_URL}" version || true
+    restart: "no"

@@ -1,0 +1,12 @@
+services:
+  digihome-fronted-service:
+    image: ghcr.io/docs-digihome/digihome-fe:${FRONTEND_IMAGE_TAG:-latest}
+    container_name: digihome-fronted-service
+    restart: unless-stopped
+    # ports: ["${APP_PORT:-8080}:8080"]
+    environment:
+      - BASE_URL=${VITE_BASE_URL:-https://localhost:8080}
+      - API_BASE_URL=${VITE_API_BASE_URL:-https://localhost:8080/api}
+      - ASSETS_BASE_URL=${VITE_ASSETS_BASE_URL:-https://localhost:8080/documents}
+    networks:
+      - digihome-network
