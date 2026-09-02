@@ -1,0 +1,3 @@
+cert
+# keep .env LF even on Windows - prevents "$'\r': command not found" on source
+# (also handled in bin/start.sh via CRLF strip)
